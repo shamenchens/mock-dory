@@ -1,6 +1,7 @@
 const WebSocketServer = require('ws').Server;
 const express = require('express');
 const path = require('path');
+const url = require('url');
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -29,12 +30,30 @@ function generateJpMessage() {
   return { from: fromCity, to: toCity };
 }
 
-const wss = new WebSocketServer({ server: server });
-wss.on('connection', function (ws) {
+function generateMessages(global = false) {
+  return[...new Array(Math.ceil(Math.random() * 10))].map(() => {
+    return global ? generateGlobalMessage() : generateJpMessage();
+  });
+}
+
+const wssJp = new WebSocketServer({ noServer: true });
+wssJp.on('connection', function (ws) {
   const id = setInterval(function () {
-    const messages = [...new Array(Math.ceil(Math.random() * 10))].map(() => {
-      return generateJpMessage();
-    });
+    const messages = generateMessages();
+    console.log(messages);
+    ws.send(JSON.stringify(messages), function () { /* ignore errors */ });
+  }, 500);
+  console.log('started client interval');
+  ws.on('close', function () {
+    console.log('stopping client interval');
+    clearInterval(id);
+  });
+});
+
+const wssGlobal = new WebSocketServer({ noServer: true });
+wssGlobal.on('connection', function (ws) {
+  const id = setInterval(function () {
+    const messages = generateMessages(true);
     console.log(messages);
     ws.send(JSON.stringify(messages), function () { /* ignore errors */ });
   }, 500);
@@ -46,6 +65,21 @@ wss.on('connection', function (ws) {
 });
 
 server.on('request', app);
+server.on('upgrade', (request, socket, head) => {
+  const pathname = url.parse(request.url).pathname;
+
+  if (pathname === '/edges/jp') {
+    wssJp.handleUpgrade(request, socket, head, (ws) => {
+      wssJp.emit('connection', ws);
+    });
+  } else if (pathname === '/edges') {
+    wssGlobal.handleUpgrade(request, socket, head, (ws) => {
+      wssGlobal.emit('connection', ws);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 server.listen(port, function () {
   console.log(`Listening on ${port}`);
 });
