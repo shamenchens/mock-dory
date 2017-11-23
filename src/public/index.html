@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script>
+    function updateStats(messages) {
+      messages
+        .map(message => {
+          document.getElementById('from').textContent = `${message.from.lat}, ${message.from.lng}`;
+          document.getElementById('to').textContent = `${message.to.lat}, ${message.to.lng}`;
+        });
+    }
+
+    const ws = new WebSocket(`ws://${location.host}`);
+    ws.addEventListener('message', function () {
+      updateStats(JSON.parse(event.data));
+    });
+  </script>
+</head>
+
+<body>
+  <strong>Server Stats</strong>
+  <br> From:
+  <div id='from'></div>
+  <br> To:
+  <div id='to'></div>
+</body>
+
+</html>
