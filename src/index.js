@@ -21,13 +21,21 @@ function generateGlobalMessage() {
   const fromCity = fromCountry[Math.floor(Math.random() * fromCountry.length)];
   const toCountry = countryList[Math.floor(Math.random() * countryLength)];
   const toCity = toCountry[Math.floor(Math.random() * toCountry.length)];
-  return { from: fromCity, to: toCity };
+  const meta = generateMeta();
+  return { from: fromCity, to: toCity, meta };
 }
 
 function generateJpMessage() {
   const fromCity = jp[Math.floor(Math.random() * jp.length)];
   const toCity = jp[Math.floor(Math.random() * jp.length)];
-  return { from: fromCity, to: toCity };
+  const meta = generateMeta();
+  return { from: fromCity, to: toCity, meta };
+}
+
+function generateMeta() {
+  return {
+    contentType: ['MESSAGE', 'AUDIO', 'VIDEO', 'LOCATION'][Math.floor(Math.random() * 4)]
+  };
 }
 
 function generateMessages(global = false) {
